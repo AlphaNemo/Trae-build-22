@@ -1,105 +1,244 @@
-# 技术栈速查 · AI 无障碍黑客松
+# TECH_STACK.md — 前后端技术栈规范
 
-> 适用场景：**TRAE on Campus @南方科技大学 · AI Accessibility Hackathon**
-> 目标：2.5 小时闪电开发，现场路演 Demo
-> 维护方式：开赛前定稿，现场不再讨论选型
-
----
-
-## 0. 一句话原则
-
-> **闪电赛里，"最快跑通" > "最先进"。技术栈必须在开赛前定好。**
+> **项目**：Trae-build-22 ｜ TRAE on Campus @南方科技大学 · AI Accessibility Hackathon
+> **活动**：2026-10-11（周日）13:00–18:30 ｜ 南科大智华楼 108
+> **文档定位**：本项目技术选型的**唯一真相来源（Single Source of Truth）**，供人类与 AI 编码助手共同遵循
+> **约束**：2.5 小时闪电开发，现场路演 Demo ｜ 更新：2026-10-10
 
 ---
 
-## 1. 结论先行：只有两条路值得走
+## 0. 给 AI 编码助手的读取说明（Machine Instructions）
 
-| 路线 | 技术栈 | 适合谁 | 出活速度 |
-|---|---|---|---|
-| **A. Python 快原型（首选）** | `Streamlit` / `Gradio` + Python | 队里有人会 Python | ⚡⚡⚡ 50 行代码即可起步 |
-| **B. JS 好看版** | `Next.js` + `Tailwind` + `shadcn/ui` + `Vercel AI SDK` | 队里有人会前端 | ⚡⚡ 15 分钟起模板，UI 更精致 |
-| C. 移动端（慎用） | `Flutter` / `React Native` | 必须真机演示时 | ⚡ 2.5 小时风险高 |
-
-- A 路线：**最快出 AI demo**，一个带文件上传的聊天界面不到 50 行 Python。
-- B 路线：2026 黑客松 Web App 默认栈，UI 精致、Vercel 一键部署。
-- C 路线：除非必须真机演示，否则不碰。
+- 本文件是技术选型的**唯一依据**。生成代码前必须先读本文件。
+- **禁止引入本文件未列出的框架或依赖**；需要新增时先说明理由。
+- 生成代码**必须遵守第 6 节的目录结构**与第 9 节的编码规范。
+- 接口字段**必须与 `shared/contract.md` 完全一致**（大小写敏感）。
+- 一次只改一个模块，输出**完整文件**，可运行优先。
+- **禁止生成伪代码、禁止省略 import、禁止使用未声明的变量**。
 
 ---
 
-## 2. 通用技术栈分层
+## 1. 技术栈声明（Machine-Readable）
 
-| 层 | 常见选项 | 黑客松建议 |
-|---|---|---|
-| 前端 / UI | Next.js、React、Vue、**Streamlit**、**Gradio** | 快原型用后两者；要好看用 Next.js |
-| 后端 / API | **FastAPI**、Flask、Node、Next API Routes | AI 类首选 FastAPI（异步 + 自动文档） |
-| 数据库 | Supabase、SQLite、Postgres | 闪电赛**能不用就不用** |
-| AI 编排 | LangChain / LlamaIndex / 直接调 API | 短赛**直接调 API**，别上框架 |
-| 部署 | **Vercel**、Streamlit Cloud、本地跑 | Vercel 一键部署最省事 |
-| 版本控制 | Git | 按目录切分 + 接口契约冻结 |
+```yaml
+project:
+  name: Trae-build-22
+  repo: https://github.com/AlphaNemo/Trae-build-22
+  type: web-app                 # 交付形态：浏览器网页
+  runtime: python               # 3.10+
+  os_target: windows
+  deadline: 2026-10-11T13:00
 
----
+stack:
+  frontend:
+    primary: nicegui            # 团队当前使用（见 main.py）；沙箱实测 3.18.0
+    alternative: streamlit      # 更快，但 UI 定制弱
+    heavy: nextjs               # 仅在有前端人力时
+  backend:
+    framework: fastapi          # >=0.110（沙箱实测 0.143.0）
+    server: uvicorn             # 沙箱实测 0.54.0
+    validation: pydantic
+  ai_layer:
+    llm: openai-compatible-api  # Claude / GPT / 通义 / 豆包 / DeepSeek
+    vision: vlm                 # 图像描述
+    speech_to_text: asr         # 语音识别
+    text_to_speech: tts         # 优先浏览器内置 Web Speech API
+  deploy:
+    local: true
+    option: vercel | streamlit-cloud | docker
+  vcs: git
 
-## 3. AI + 无障碍「弹药清单」
-
-### 3.1 通用 AI 能力
-
-- **大模型 LLM API**：Claude / GPT / 国内（通义千问、豆包、DeepSeek、智谱）——看谁的 key 现成
-- **多模态视觉 VLM**：图像描述、场景理解 —— 视障辅助的核心
-- **语音识别 ASR**：Whisper / 讯飞 / 各云厂商 —— 听障、语音交互的核心
-- **语音合成 TTS**：文本转语音播报
-- **OCR**：文字识别 ——「拍一下读出来」
-
-### 3.2 无障碍专属技术（可参考的现成产品）
-
-- **读屏**：iOS `VoiceOver` / 安卓 `TalkBack`（系统自带）
-- **视觉辅助**：微软 `Seeing AI`、谷歌 `Lookout`、`Be My Eyes`（GPT-4 驱动，发张图即描述）
-- **听觉辅助**：`ASR + TTS`、声音事件识别（音频标记）、手语识别/合成
-
-> ⚠️ **手语识别/合成、眼动追踪**虽然酷炫，但 2.5 小时**绝对做不出来**——直接跳过。
-
----
-
-## 4. 无障碍场景 → 技术映射
-
-| 目标人群 | 典型需求 | 用到的技术 |
-|---|---|---|
-| **视障** | 识别物体、读文字、听界面 | OCR + VLM 图像描述 + TTS + 语义化标签 |
-| **听障** | 实时字幕、声音提醒、交流 | ASR + TTS + 声音事件识别 + 振动反馈 |
-| **肢体/运动障碍** | 免手操作 | 语音交互 + 大按钮 + 焦点管理 |
-| **老年群体** | 看不清、听不清 | 大字/高对比 UI + 语音播报 |
-
----
-
-## 5. 默认推荐（直接抄）
-
-```
-前端：Streamlit（快） 或 Next.js + Tailwind + shadcn/ui（好看）
-AI  ：直接调 LLM API（文本）+ VLM（图像描述）+ ASR（语音）
-部署：本地跑 或 Vercel 一键上线
-协作：Git（按目录切分 + 契约冻结）
+forbidden:                      # 2.5 小时内禁止使用
+  - langchain
+  - langgraph
+  - 数据库 / ORM                 # 内存即可
+  - 微服务 / 消息队列
+  - 需要训练模型的方案
+  - 硬件 / 传感器
 ```
 
-- 赛题偏「拍照 → 理解 → 播报」：`Streamlit + VLM + TTS` 是最短路径。
-- 赛题偏「实时语音 → 文字」：`网页录音 + ASR API`。
+---
+
+## 2. 路线选择
+
+| 路线 | 前端 | 后端 | 适合 | 风险 |
+|---|---|---|---|---|
+| **A+（当前默认）** | **NiceGUI** | 内嵌 FastAPI | 要现代 UI 又不想写 JS | 冷门库幻觉风险 ↑（务必锁版本） |
+| A | Streamlit | 内嵌 / FastAPI | 最快出活 | UI 定制受限 |
+| B | Next.js + Tailwind + shadcn/ui | Next API / FastAPI | 有前端人力、要精致 UI | 依赖/build 弱网翻车 |
+
+**决策规则（AI 可直接套用）**：
+
+```
+默认 → A+（NiceGUI，与 main.py 现状一致）
+需要极速保底 → A（Streamlit）
+有熟练 React 人力且网络稳定 → B
+无 API key 或时间 < 1h → 降级为 A + shared/mock.md 假数据
+```
 
 ---
 
-## 6. 避坑清单
+## 3. 前端技术栈
 
-- ❌ 别现场再选栈 —— **赛前就把环境装好、模板跑通**。
-- ❌ 别上 LangChain / 数据库 / 微服务 —— 直接调 API、内存存数据。
-- ❌ 别碰训练模型、硬件、传感器。
-- ✅ 提前把各家 API 的 **key 和免费额度**备好（账号全登录）。
-- ✅ 用 TRAE 生成代码时，**把技术栈写进提示词**（如「用 Python + Streamlit」），否则可能给出一套跑不起来的东西。
+| 项 | 选型 | 说明 |
+|---|---|---|
+| 主框架 | **NiceGUI 3.x** | `ui.` 组件 + 事件驱动，UI 现代，纯 Python |
+| 备选框架 | Streamlit | `st.` API，50 行起步 |
+| 重装框架 | Next.js + Tailwind + shadcn/ui | 仅在有前端人力时 |
+| 常用组件 | `ui.label` / `ui.button` / `ui.upload` / `ui.card` | 见 `main.py` |
+| 布局 | `with ui.column()/row()/card():` | 缩进即结构 |
+| 浏览器能力 | `ui.run_javascript()` + Web Speech API | TTS 朗读零依赖 |
+| 样式 | `.classes()` / `.props()`（Tailwind / Quasar） | 精细调整 |
 
 ---
 
-## 7. 开赛前环境 Checklist
+## 4. 后端技术栈
 
-- [ ] 选定路线 A 或 B，并让全员统一
-- [ ] 本地跑通一个「Hello World」脚手架（能启动、能预览）
-- [ ] 至少 1 个 LLM API key 可用（并有备用）
-- [ ] ASR / TTS / VLM 能力至少各验证一个（哪怕用免费额度）
-- [ ] Git 配置完成（`user.email` 用 GitHub noreply 邮箱，避免 push 被拒）
-- [ ] 统一目录结构：`/ui` `/logic` `/ai` `/shared` + `main`
-- [ ] 确定接口契约文件位置与字段规范
+| 项 | 选型 | 说明 |
+|---|---|---|
+| 框架 | **FastAPI** | 原生 async，适合 AI IO |
+| 服务器 | **Uvicorn** | `uvicorn app:app --reload` |
+| 数据校验 | **Pydantic** | 定义接口契约模型 |
+| 流式 | `StreamingResponse` + async generator | 打字机效果 |
+| 上传 | `UploadFile`（需 `python-multipart`） | 图片/音频接收 |
+| 跨域 | `CORSMiddleware` | 前后端分离必配 |
+
+> 说明：NiceGUI 内置 FastAPI，简单场景逻辑可直接写在 `main.py`；需要独立接口时再拆出 FastAPI 服务。
+
+**标准接口形态**：
+
+| 方法 | 路径 | 用途 |
+|---|---|---|
+| GET | `/health` | 存活检查 |
+| POST | `/chat` | 一次性返回 |
+| POST | `/chat/stream` | 流式返回 |
+| POST | `/describe` | 上传图片→AI 描述 |
+
+---
+
+## 5. AI 能力层
+
+### 5.1 LLM（文本）
+- 统一走 **OpenAI 兼容接口**（换 `base_url` + `api_key` 即可切换厂商）。
+- key 只放**后端环境变量**，绝不进前端。
+
+### 5.2 VLM（图像描述）
+- 输入图片 → 输出自然语言描述 → 服务视障用户。
+
+### 5.3 ASR（语音识别）
+- 浏览器录音 → 上传 → ASR 接口 → 文本。
+
+### 5.4 TTS（语音合成）——优先级
+1. **浏览器内置 Web Speech API**（零依赖、免费）← 首选
+2. 云厂商 TTS（音质更好时）
+
+### 5.5 无障碍映射
+| 人群 | 组合 |
+|---|---|
+| 视障 | VLM 图像描述 + OCR + TTS + 语义化标签 |
+| 听障 | ASR + TTS + 声音事件识别 |
+| 肢体障碍 | 语音交互 + 大按钮 + 焦点管理 |
+| 老年 | 大字/高对比 UI + 语音播报 |
+
+---
+
+## 6. 目录结构（与仓库现状对齐）
+
+```
+Trae-build-22/
+├─ main.py              # 入口装配（NiceGUI，1 人独占）
+├─ ui/                  # 前端界面（开发A）
+├─ logic/               # 业务逻辑（开发B）
+├─ ai/                  # AI 调用 / prompt（开发C）
+└─ shared/
+   ├─ contract.md       # 接口契约（已建，待填）
+   └─ mock.md           # 假数据（已建，待填）
+```
+
+- **一个文件只有一个 owner**；改公共文件前先广播。
+- 接口契约**先冻结再开发**。
+- 现状：`shared/contract.md`、`shared/mock.md`、`AGENT.md` 目前为**空文件**，需尽快补齐。
+
+---
+
+## 7. 接口契约（前后端约定）
+
+写入 `shared/contract.md`：
+
+```jsonc
+// POST /chat
+// Request
+{ "message": "string" }
+// Response
+{ "reply": "string" }
+
+// POST /chat/stream  →  text/plain（逐字）
+// POST /describe
+// Request: multipart/form-data, field = file
+// Response
+{ "filename": "string", "size": 0, "description": "string" }
+```
+
+> 字段名**大小写敏感**，任何变更必须同步更新本文件并广播全队。
+
+---
+
+## 8. 依赖与安装
+
+```bash
+# 前端（当前路线 A+）
+pip install nicegui            # 沙箱实测 3.18.0
+
+# 后端
+pip install fastapi "uvicorn[standard]" python-multipart
+
+# 运行
+python main.py                 # NiceGUI（默认 8080 端口）
+```
+
+沙箱已验证版本：`nicegui 3.18.0`、`fastapi 0.143.0`、`uvicorn 0.54.0`、`Python 3.12`。
+
+---
+
+## 9. 编码规范
+
+**Do**
+- ✅ `async def` 处理所有 AI/IO 调用
+- ✅ 用 Pydantic 模型定义接口入出参
+- ✅ 提交前贴出**完整报错 + 相关文件**
+- ✅ 每次改动立即 `git commit`（小步提交）
+
+**Don't**
+- ❌ 不写伪代码、不省略 import、不用未声明变量
+- ❌ 不为「最小补丁」而重写整个文件
+- ❌ 不在 `async def` 里用同步 `requests`
+- ❌ 不把 API key 写进前端
+- ❌ 不引入 `forbidden` 清单里的依赖
+
+**Git 提交格式**：`<模块>: <改动>`，如 `ui: 增加图片上传`
+
+---
+
+## 10. 开赛前环境 Checklist
+
+- [ ] 确认路线 A+（NiceGUI），全员统一
+- [ ] 本地跑通 `python main.py`（能启动、能预览）
+- [ ] 至少 1 个 LLM API key 可用（含备用）
+- [ ] ASR / TTS / VLM 各验证一个
+- [ ] 全部依赖已安装、已缓存（弱网也能装）
+- [ ] Git 配置完成（`user.email` 用 GitHub noreply，避免 push 被拒）
+- [ ] 补全 `shared/contract.md` 与 `shared/mock.md`
+
+---
+
+## 附：配套文件
+
+| 文件 | 用途 |
+|---|---|
+| `main.py` | NiceGUI 入口（已存在，Hello World） |
+| `nicegui_ai_demo.py` | NiceGUI 无障碍骨架（已测） |
+| `fastapi_ai_demo.py` | FastAPI 后端骨架（已测） |
+| `shared/contract.md` | 接口契约（待填） |
+| `shared/mock.md` | 假数据（待填） |
+
+*本文件为技术选型唯一真相来源，代码实现须与此保持一致。*
