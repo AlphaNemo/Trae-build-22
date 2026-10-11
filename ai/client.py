@@ -64,6 +64,21 @@ def _parse_json_object(text: str) -> dict | None:
     return data if isinstance(data, dict) else None
 
 
+_http: httpx.AsyncClient | None = None
+_http_loop = None
+
+
+def _http_client() -> httpx.AsyncClient:
+    """进程内共享连接池：同一事件循环内复用连接（省去每次 TCP+TLS 握手）；
+    检测到 loop 变化（如测试脚本多次 asyncio.run）则重建，避免跨 loop 报错。"""
+    global _http, _http_loop
+    loop = asyncio.get_running_loop()
+    if _http is None or _http_loop is not loop:
+        _http = httpx.AsyncClient(timeout=get_settings().timeout)
+        _http_loop = loop
+    return _http
+
+
 class AIClient:
     """三个能力各一个方法；scan 返回 dict | None，其余返回 str | None（None = 失败，走 mock）。"""
 
@@ -73,20 +88,20 @@ class AIClient:
         if not settings.available or prompt is None:
             return None
         try:
-            async with httpx.AsyncClient(timeout=settings.timeout) as client:
-                resp = await client.post(
-                    f"{settings.base_url.rstrip('/')}/responses",
-                    headers={"Authorization": f"Bearer {settings.api_key}"},
-                    json={
-                        "model": settings.model_name,
-                        "input": [
-                            {"role": "system", "content": [{"type": "input_text", "text": prompt}]},
-                            {"role": "user", "content": [{"type": "input_text", "text": message}]},
-                        ],
-                    },
-                )
-                resp.raise_for_status()
-                return _extract_response_text(resp.json())
+            client = _http_client()
+            resp = await client.post(
+                f"{settings.base_url.rstrip('/')}/responses",
+                headers={"Authorization": f"Bearer {settings.api_key}"},
+                json={
+                    "model": settings.model_name,
+                    "input": [
+                        {"role": "system", "content": [{"type": "input_text", "text": prompt}]},
+                        {"role": "user", "content": [{"type": "input_text", "text": message}]},
+                    ],
+                },
+            )
+            resp.raise_for_status()
+            return _extract_response_text(resp.json())
         except Exception:
             return None
 
@@ -99,29 +114,29 @@ class AIClient:
         b64 = base64.b64encode(image).decode("ascii")
         data_url = f"data:{_guess_mime(filename)};base64,{b64}"
         try:
-            async with httpx.AsyncClient(timeout=settings.timeout) as client:
-                resp = await client.post(
-                    f"{settings.base_url.rstrip('/')}/responses",
-                    headers={"Authorization": f"Bearer {settings.api_key}"},
-                    json={
-                        "model": settings.vlm_model_name,
-                        "input": [
-                            {"role": "system", "content": [{"type": "input_text", "text": prompt}]},
-                            {
-                                "role": "user",
-                                "content": [
-                                    {"type": "input_text", "text": "这是一张药盒或说明书的照片，请识别用药卡。"},
-                                    {"type": "input_image", "image_url": data_url},
-                                ],
-                            },
-                        ],
-                    },
-                )
-                resp.raise_for_status()
-                text = _extract_response_text(resp.json())
-                if not text:
-                    return None
-                return _parse_json_object(text)
+            client = _http_client()
+            resp = await client.post(
+                f"{settings.base_url.rstrip('/')}/responses",
+                headers={"Authorization": f"Bearer {settings.api_key}"},
+                json={
+                    "model": settings.vlm_model_name,
+                    "input": [
+                        {"role": "system", "content": [{"type": "input_text", "text": prompt}]},
+                        {
+                            "role": "user",
+                            "content": [
+                                {"type": "input_text", "text": "这是一张药盒或说明书的照片，请识别用药卡。"},
+                                {"type": "input_image", "image_url": data_url},
+                            ],
+                        },
+                    ],
+                },
+            )
+            resp.raise_for_status()
+            text = _extract_response_text(resp.json())
+            if not text:
+                return None
+            return _parse_json_object(text)
         except Exception:
             return None
 
