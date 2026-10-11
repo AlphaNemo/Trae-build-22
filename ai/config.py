@@ -30,6 +30,7 @@ class Settings:
     vlm_model_name: str
     asr_model_name: str
     asr_sample_rate: int
+    dashscope_ws_url: str
     timeout: float
 
     @property
@@ -52,6 +53,9 @@ def get_settings() -> Settings:
             vlm_model_name=os.environ.get("VLM_MODEL_NAME", "gpt-4o"),
             asr_model_name=os.environ.get("ASR_MODEL_NAME", "paraformer-realtime-v2"),
             asr_sample_rate=int(os.environ.get("ASR_SAMPLE_RATE", "16000")),
+            # 代理/网关场景：ASR 的 WebSocket 地址（兼容旧写法 dashscope.BASE_URL）
+            dashscope_ws_url=os.environ.get("DASHSCOPE_BASE_URL")
+            or os.environ.get("dashscope.BASE_URL", ""),
             timeout=float(os.environ.get("AI_TIMEOUT", "20")),
         )
     return _settings

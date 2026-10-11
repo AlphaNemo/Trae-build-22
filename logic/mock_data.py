@@ -48,6 +48,8 @@ MED_CARDS: dict[str, dict] = {
         "meal_timing": "饭前饭后都可以，间隔 8 小时",
         "speak_text": _speak("阿莫西林胶囊", "一次 2 粒", "一天 3 次", "饭前饭后都可以，间隔 8 小时", "青霉素过敏者禁用"),
         "share_text": _share("阿莫西林胶囊", "一次 2 粒", "一天 3 次", "饭前饭后都可以（间隔 8 小时）", "青霉素过敏者禁用。"),
+        "note": None,
+        "warning": "青霉素过敏者禁用",
     },
     "cefix": {
         "drug_name": "头孢克肟分散片",
@@ -56,6 +58,8 @@ MED_CARDS: dict[str, dict] = {
         "meal_timing": "饭后吃",
         "speak_text": _speak("头孢克肟分散片", "一次 2 片", "一天 2 次", "饭后吃", "服药期间和停药 7 天内，一口酒都不能沾"),
         "share_text": _share("头孢克肟分散片", "一次 2 片", "一天 2 次", "饭后吃", "服药期间和停药 7 天内，一口酒都不能沾。"),
+        "note": None,
+        "warning": "服药期间和停药 7 天内，一口酒都不能沾",
     },
     "metfor": {
         "drug_name": "二甲双胍缓释片",
@@ -64,6 +68,8 @@ MED_CARDS: dict[str, dict] = {
         "meal_timing": "随餐或饭后马上吃",
         "speak_text": _speak("二甲双胍缓释片", "一次 1 片", "一天 2 次", "随餐或饭后马上吃", None),
         "share_text": _share("二甲双胍缓释片", "一次 1 片", "一天 2 次", "随餐或饭后马上吃", "空腹吃容易拉肚子。"),
+        "note": "空腹吃容易拉肚子",
+        "warning": None,
     },
     "ibu": {
         "drug_name": "布洛芬缓释胶囊",
@@ -72,6 +78,8 @@ MED_CARDS: dict[str, dict] = {
         "meal_timing": "饭后吃",
         "speak_text": _speak("布洛芬缓释胶囊", "一次 1 粒", "一天 2 次", "饭后吃", "有胃病、哮喘请先问医生"),
         "share_text": _share("布洛芬缓释胶囊", "一次 1 粒", "一天 2 次", "饭后吃", "空腹吃伤胃；有胃病、哮喘请先问医生。"),
+        "note": "空腹吃伤胃",
+        "warning": "有胃病、哮喘请先问医生",
     },
     "nife": {
         "drug_name": "硝苯地平控释片",
@@ -80,6 +88,8 @@ MED_CARDS: dict[str, dict] = {
         "meal_timing": "早晨固定时间，整片吞不能掰",
         "speak_text": _speak("硝苯地平控释片", "一次 1 片", "一天 1 次", "早晨固定时间，整片吞不能掰", None),
         "share_text": _share("硝苯地平控释片", "一次 1 片", "一天 1 次", "早晨固定时间整片吞服", "药片空壳随大便排出是正常的。"),
+        "note": "药片空壳随大便排出是正常的",
+        "warning": None,
     },
     "gankang": {
         "drug_name": "感冒灵颗粒",
@@ -88,6 +98,8 @@ MED_CARDS: dict[str, dict] = {
         "meal_timing": "开水冲服，饭后",
         "speak_text": _speak("感冒灵颗粒", "一次 1 袋", "一天 3 次", "开水冲服，饭后", "含对乙酰氨基酚，别和其他感冒药一起吃"),
         "share_text": _share("感冒灵颗粒", "一次 1 袋", "一天 3 次", "开水冲服，饭后", "含对乙酰氨基酚，别和其他感冒药一起吃。"),
+        "note": None,
+        "warning": "含对乙酰氨基酚，别和其他感冒药一起吃",
     },
     "statin": {
         "drug_name": "阿托伐他汀钙片",
@@ -96,6 +108,8 @@ MED_CARDS: dict[str, dict] = {
         "meal_timing": "睡前吃最好",
         "speak_text": _speak("阿托伐他汀钙片", "一次 1 片", "一天 1 次", "睡前吃最好", None),
         "share_text": _share("阿托伐他汀钙片", "一次 1 片", "一天 1 次", "睡前吃", None),
+        "note": None,
+        "warning": None,
     },
     "amlo": {
         "drug_name": "氨氯地平片",
@@ -104,6 +118,8 @@ MED_CARDS: dict[str, dict] = {
         "meal_timing": "固定时间，饭前饭后都行",
         "speak_text": _speak("氨氯地平片", "一次 1 片", "一天 1 次", "固定时间，饭前饭后都行", None),
         "share_text": _share("氨氯地平片", "一次 1 片", "一天 1 次", "固定时间吃", None),
+        "note": None,
+        "warning": None,
     },
 }
 

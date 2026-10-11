@@ -137,6 +137,8 @@ class AIClient:
                 from dashscope.audio.asr import Recognition, RecognitionCallback, RecognitionResult
 
                 dashscope.api_key = settings.api_key
+                if settings.dashscope_ws_url:
+                    dashscope.base_websocket_api_url = settings.dashscope_ws_url
 
                 class _CB(RecognitionCallback):
                     def __init__(self) -> None:
@@ -149,10 +151,17 @@ class AIClient:
                         pass
 
                     def on_event(self, result: RecognitionResult) -> None:
-                        # 每次识别结果都会回调，取最后一次的句子
+                        # 每次识别结果都会回调，取最后一次的句子；兼容 Sentence 对象与 dict 两种返回
                         sentence = result.get_sentence()
-                        if sentence:
-                            self.text = sentence
+                        if not sentence:
+                            return
+                        text = None
+                        if isinstance(sentence, dict):
+                            text = sentence.get("text")
+                        elif hasattr(sentence, "get_text"):
+                            text = sentence.get_text()
+                        if text:
+                            self.text = text
 
                     def on_complete(self) -> None:
                         pass

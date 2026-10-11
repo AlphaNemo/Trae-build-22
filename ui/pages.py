@@ -7,6 +7,7 @@ import base64
 import random
 from nicegui import ui
 
+from logic import bridge
 from ui.a11y import a11y_card, a11y_button, a11y_label
 from ui.drug_data import DRUGS, get_drug
 from ui.tts import speak, stop_speaking
@@ -143,7 +144,7 @@ def build_scan(refresh_fn):
         .props('aria-live="polite" role="status"')
 
     async def _on_upload(e):
-        """上传回调：读图片 → 显示预览 → 启动扫描动画"""
+        """上传回调：读图片 → 显示预览 → 真 AI 识别（失败静默回退预置）→ 跳结果页"""
         status.set_text('正在识别…')
 
         data = await e.file.read()
@@ -151,18 +152,21 @@ def build_scan(refresh_fn):
         b64 = base64.b64encode(data).decode()
         img_src = f'data:{ctype};base64,{b64}'
 
-        # 清空扫描框，填入图片 + 扫描线
+        # 清空扫描框，填入图片 + 扫描线（动画在识别期间持续播放）
         scan_frame.clear()
         with scan_frame:
             ui.html(f'<img src="{img_src}" alt="上传的药品图片">')
             ui.element('div').classes('scan-line')
 
-        # 1.2s 后换状态 → 0.8s 后跳结果页
-        def _step1():
+        # 真 AI 识别：配置了 key 且识别成功 → 用 AI 读到的三行；
+        # 未配置 / 超时 / 拍不清 / 非预置药 → bridge 返回 None，静默走预置演示流程
+        drug = await bridge.recognize(data, getattr(e.file, 'name', '') or 'photo.jpg')
+        if drug is not None:
+            state.selected_drug = drug
+            status.set_text('✅ AI 识别：' + drug['name'] + '，正在生成三行卡…')
+        else:
             status.set_text('✅ 已识别：' + state.selected_drug['name'] + '，正在生成三行卡…')
-            ui.timer(0.8, lambda: go_to('result', refresh_fn), once=True)
-
-        ui.timer(1.2, _step1, once=True)
+        ui.timer(0.8, lambda: go_to('result', refresh_fn), once=True)
 
     with ui.column().classes('w-full items-center gap-3'):
         # 返回按钮
