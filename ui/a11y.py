@@ -395,6 +395,16 @@ def setup_theme():
           border-radius: 16px !important;
           border: 2px dashed var(--border) !important;
       }}
+      /* 黑色加号触发按钮（加大） */
+      .q-uploader .q-btn--dense.q-btn {{
+          min-height: 72px !important;
+          min-width: 72px !important;
+          font-size: 32px !important;
+          border-radius: 20px !important;
+      }}
+      .q-uploader .q-btn--dense.q-btn .q-icon {{
+          font-size: 36px !important;
+      }}
     </style>
     ''')
 
