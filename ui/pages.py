@@ -7,7 +7,7 @@ import base64
 import random
 from nicegui import ui
 
-from logic import bridge
+from logic import scan_service
 from ui.a11y import a11y_card, a11y_button, a11y_label
 from ui.drug_data import DRUGS, get_drug
 from ui.tts import speak, stop_speaking
@@ -159,8 +159,8 @@ def build_scan(refresh_fn):
             ui.element('div').classes('scan-line')
 
         # 真 AI 识别：配置了 key 且识别成功 → 用 AI 读到的三行；
-        # 未配置 / 超时 / 拍不清 / 非预置药 → bridge 返回 None，静默走预置演示流程
-        drug = await bridge.recognize(data, getattr(e.file, 'name', '') or 'photo.jpg')
+        # 未配置 / 超时 / 拍不清 / 非预置药 → scan_service 返回 None，静默走预置演示流程
+        drug = await scan_service.scan_drug(data, getattr(e.file, 'name', '') or 'photo.jpg')
         if drug is not None:
             state.selected_drug = drug
             status.set_text('✅ AI 识别：' + drug['name'] + '，正在生成三行卡…')

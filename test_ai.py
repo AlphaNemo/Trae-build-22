@@ -71,6 +71,49 @@ def make_test_wav() -> bytes:
     return riff + fmt + data_chunk + data
 
 
+def check_data_consistency() -> bool:
+    """比对 ui/drug_data.py 与 logic/mock_data.py 的药品数据（统一药品形状逐字段）。
+    shared/mock.md 为权威源：发现不一致时改代码副本，不要改 mock.md。"""
+    from logic import mock_data
+    from ui.drug_data import DRUGS
+
+    problems: list[str] = []
+    ui_map = {d["id"]: d for d in DRUGS}
+    be_ids = [m["id"] for m in mock_data.MOCK_MEDICATIONS]
+
+    if sorted(ui_map) != sorted(be_ids):
+        problems.append(f"id 集合不一致：ui={sorted(ui_map)} backend={sorted(be_ids)}")
+
+    for pid in sorted(set(ui_map) & set(be_ids)):
+        u, card = ui_map[pid], mock_data.MED_CARDS.get(pid)
+        if card is None:
+            problems.append(f"[{pid}] backend 缺 MED_CARDS 卡")
+            continue
+        pairs = [
+            ("药名", u["name"], card["name"]),
+            ("一次剂量", u["lines"]["dose"], card["lines"]["dose"]),
+            ("频次", u["lines"]["freq"], card["lines"]["freq"]),
+            ("餐时", u["lines"]["timing"], card["lines"]["timing"]),
+            ("note", u["note"], card["note"]),
+            ("warning", u["warning"], card["warning"]),
+        ]
+        for field, uv, bv in pairs:
+            if uv != bv:
+                problems.append(f"[{pid}] {field} 不一致：ui={uv!r} backend={bv!r}")
+
+    if problems:
+        print("=" * 60)
+        print("【数据对齐自检】发现不一致：")
+        for p in problems:
+            print(f"  ✗ {p}")
+        print("  权威源是 shared/mock.md，请改 ui/drug_data.py 或 logic/mock_data.py。")
+        print("=" * 60)
+        return False
+
+    print(f"【数据对齐自检】✅ ui/drug_data.py 与 logic/mock_data.py 完全一致（{len(ui_map)} 种药）")
+    return True
+
+
 async def main() -> None:
     settings = get_settings()
 
@@ -134,4 +177,9 @@ async def main() -> None:
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    # py test_ai.py          → AI 三接口冒烟（chat / scan / transcribe）
+    # py test_ai.py --data   → 仅做前后端药品数据对齐自检（不动 AI，秒级完成）
+    if "--data" in sys.argv:
+        sys.exit(0 if check_data_consistency() else 1)
+    else:
+        asyncio.run(main())

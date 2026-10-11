@@ -1,10 +1,10 @@
-# logic/bridge.py — AI 识别结果 → 前端 ui/drug_data 数据形状的适配层
-# 供 ui/pages.py 拍照流程调用：recognize(图片字节, 文件名) -> drug dict | None
+# logic/scan_service.py — 拍照识别服务：AI 原始输出 → 统一药品形状
+# 供 logic/routes.py（POST /scan）与 ui/pages.py（进程内直调）共用。
 # 规则（宁可不答，不能答错）：
-#   1. AI 调用失败 / JSON 解析失败 → None（前端回退预置演示流程）
+#   1. AI 调用失败 / JSON 解析失败 → None（调用方回退预置演示流程）
 #   2. 三行里出现「看不清」或为空 → None（真实照片拍不清用法时，不做假卡）
 #   3. 药名无法匹配 8 种预置药 → None（药盒/分享按预置 id 工作，未知药不进药盒）
-#   4. 匹配成功 → 以预置药为底（id/name/note/warning 保持 mock.md 权威值），
+#   4. 匹配成功 → 以预置卡为底（id/name/note/warning 保持 mock.md 权威值），
 #      仅用 AI 读到的三行覆盖 lines（这是真 AI 识别的演示价值所在）
 
 from logic import mock_data
@@ -23,8 +23,8 @@ def _match_preset_id(drug_name: str) -> str | None:
     return None
 
 
-async def recognize(image: bytes, filename: str) -> dict | None:
-    """拍照 → AI 识别 → 前端 drug dict；任何不确定都返回 None 走预置。"""
+async def scan_drug(image: bytes, filename: str) -> dict | None:
+    """拍照 → AI 识别 → 统一药品卡 dict；任何不确定都返回 None 走预置。"""
     card = await get_client().scan(image, filename)
     if not card:
         return None
@@ -41,8 +41,7 @@ async def recognize(image: bytes, filename: str) -> dict | None:
     if preset_id is None:
         return None
 
-    # 以预置全字段卡为底（id/note/warning 保持 mock.md 权威值），AI 三行覆盖 lines
-    base = mock_data.MED_CARDS[preset_id]
-    drug = {"id": preset_id, "name": base["drug_name"], **base}
+    # 以预置统一形状卡为底（id/name/note/warning 保持 mock.md 权威值），AI 三行覆盖 lines
+    drug = dict(mock_data.MED_CARDS[preset_id])
     drug["lines"] = {"dose": dose, "freq": freq, "timing": timing}
     return drug

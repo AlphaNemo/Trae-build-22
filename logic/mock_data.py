@@ -1,6 +1,7 @@
 # logic/mock_data.py — 假数据/预置数据兜底
-# 预置常用药三行卡（赛题要求：阿莫西林、二甲双胍、布洛芬）。
-# mock.md 由 D 对照 shared/contract.md 维护，B 负责代码侧与之一致。
+# 赛题：药品说明书三行大字卡。
+# 本模块的药品数据与 ui/drug_data.py（前端本地副本）采用同一「统一药品形状」，
+# 权威源 shared/mock.md（D 维护），代码副本与它逐字一致；py test_ai.py --data 可自检对齐。
 # 用途：选常用药（preset 权威数据）+ AI 失败/未配置/超时时降级（mock），保证演示不中断。
 
 import random
@@ -8,120 +9,71 @@ import random
 # GET /health
 MOCK_HEALTH = {"status": "ok"}
 
-# ---------- 预置常用药（离线可用，source=preset；降级时也复用，source=mock） ----------
-# 数据唯一权威：shared/mock.md 第 1 节 8 种药（id/药名/三行/note/warning 逐字一致，D 维护）。
+
+# ---------- 统一药品形状（前后端共用，见 shared/contract.md 第 1 节） ----------
+# { id, name, lines: {dose, freq, timing}, note, warning }
 # id 与素材药盒图 assets/images/box_<id>.jpg 一一对应。
-MOCK_MEDICATIONS = [
-    {"id": "amoxi", "name": "阿莫西林胶囊"},
-    {"id": "cefix", "name": "头孢克肟分散片"},
-    {"id": "metfor", "name": "二甲双胍缓释片"},
-    {"id": "ibu", "name": "布洛芬缓释胶囊"},
-    {"id": "nife", "name": "硝苯地平控释片"},
-    {"id": "gankang", "name": "感冒灵颗粒"},
-    {"id": "statin", "name": "阿托伐他汀钙片"},
-    {"id": "amlo", "name": "氨氯地平片"},
-]
-
-
-def _speak(name: str, dose: str, freq: str, timing: str, warning: str | None) -> str:
-    """与 shared/mock.md 第 3 节 TTS 拼接规范一致：药名。dose。freq。timing。+（warning）+ 遵医嘱提醒。"""
-    parts = [f"{name}。", f"{dose}。", f"{freq}。", f"{timing}。"]
-    if warning:
-        parts.append(f"注意：{warning}。")
-    parts.append("具体请遵医嘱。")
-    return "".join(parts)
-
-
-def _share(name: str, dose: str, freq: str, timing: str, extra: str | None) -> str:
-    """契约格式：【用药卡】药名：一次 X 片，一天 X 次，饭后吃（note/warning 有则附一句）。"""
-    text = f"【用药卡】{name}：{dose}，{freq}，{timing}。"
-    if extra:
-        text += extra
-    return text
-
-
 MED_CARDS: dict[str, dict] = {
     "amoxi": {
-        "drug_name": "阿莫西林胶囊",
-        "per_dose": "一次 2 粒",
-        "daily_times": "一天 3 次",
-        "meal_timing": "饭前饭后都可以，间隔 8 小时",
-        "speak_text": _speak("阿莫西林胶囊", "一次 2 粒", "一天 3 次", "饭前饭后都可以，间隔 8 小时", "青霉素过敏者禁用"),
-        "share_text": _share("阿莫西林胶囊", "一次 2 粒", "一天 3 次", "饭前饭后都可以（间隔 8 小时）", "青霉素过敏者禁用。"),
+        "id": "amoxi",
+        "name": "阿莫西林胶囊",
+        "lines": {"dose": "一次 2 粒", "freq": "一天 3 次", "timing": "饭前饭后都可以，间隔 8 小时"},
         "note": None,
         "warning": "青霉素过敏者禁用",
     },
     "cefix": {
-        "drug_name": "头孢克肟分散片",
-        "per_dose": "一次 2 片",
-        "daily_times": "一天 2 次",
-        "meal_timing": "饭后吃",
-        "speak_text": _speak("头孢克肟分散片", "一次 2 片", "一天 2 次", "饭后吃", "服药期间和停药 7 天内，一口酒都不能沾"),
-        "share_text": _share("头孢克肟分散片", "一次 2 片", "一天 2 次", "饭后吃", "服药期间和停药 7 天内，一口酒都不能沾。"),
+        "id": "cefix",
+        "name": "头孢克肟分散片",
+        "lines": {"dose": "一次 2 片", "freq": "一天 2 次", "timing": "饭后吃"},
         "note": None,
         "warning": "服药期间和停药 7 天内，一口酒都不能沾",
     },
     "metfor": {
-        "drug_name": "二甲双胍缓释片",
-        "per_dose": "一次 1 片",
-        "daily_times": "一天 2 次",
-        "meal_timing": "随餐或饭后马上吃",
-        "speak_text": _speak("二甲双胍缓释片", "一次 1 片", "一天 2 次", "随餐或饭后马上吃", None),
-        "share_text": _share("二甲双胍缓释片", "一次 1 片", "一天 2 次", "随餐或饭后马上吃", "空腹吃容易拉肚子。"),
+        "id": "metfor",
+        "name": "二甲双胍缓释片",
+        "lines": {"dose": "一次 1 片", "freq": "一天 2 次", "timing": "随餐或饭后马上吃"},
         "note": "空腹吃容易拉肚子",
         "warning": None,
     },
     "ibu": {
-        "drug_name": "布洛芬缓释胶囊",
-        "per_dose": "一次 1 粒",
-        "daily_times": "一天 2 次",
-        "meal_timing": "饭后吃",
-        "speak_text": _speak("布洛芬缓释胶囊", "一次 1 粒", "一天 2 次", "饭后吃", "有胃病、哮喘请先问医生"),
-        "share_text": _share("布洛芬缓释胶囊", "一次 1 粒", "一天 2 次", "饭后吃", "空腹吃伤胃；有胃病、哮喘请先问医生。"),
+        "id": "ibu",
+        "name": "布洛芬缓释胶囊",
+        "lines": {"dose": "一次 1 粒", "freq": "一天 2 次", "timing": "饭后吃"},
         "note": "空腹吃伤胃",
         "warning": "有胃病、哮喘请先问医生",
     },
     "nife": {
-        "drug_name": "硝苯地平控释片",
-        "per_dose": "一次 1 片",
-        "daily_times": "一天 1 次",
-        "meal_timing": "早晨固定时间，整片吞不能掰",
-        "speak_text": _speak("硝苯地平控释片", "一次 1 片", "一天 1 次", "早晨固定时间，整片吞不能掰", None),
-        "share_text": _share("硝苯地平控释片", "一次 1 片", "一天 1 次", "早晨固定时间整片吞服", "药片空壳随大便排出是正常的。"),
+        "id": "nife",
+        "name": "硝苯地平控释片",
+        "lines": {"dose": "一次 1 片", "freq": "一天 1 次", "timing": "早晨固定时间，整片吞不能掰"},
         "note": "药片空壳随大便排出是正常的",
         "warning": None,
     },
     "gankang": {
-        "drug_name": "感冒灵颗粒",
-        "per_dose": "一次 1 袋",
-        "daily_times": "一天 3 次",
-        "meal_timing": "开水冲服，饭后",
-        "speak_text": _speak("感冒灵颗粒", "一次 1 袋", "一天 3 次", "开水冲服，饭后", "含对乙酰氨基酚，别和其他感冒药一起吃"),
-        "share_text": _share("感冒灵颗粒", "一次 1 袋", "一天 3 次", "开水冲服，饭后", "含对乙酰氨基酚，别和其他感冒药一起吃。"),
+        "id": "gankang",
+        "name": "感冒灵颗粒",
+        "lines": {"dose": "一次 1 袋", "freq": "一天 3 次", "timing": "开水冲服，饭后"},
         "note": None,
         "warning": "含对乙酰氨基酚，别和其他感冒药一起吃",
     },
     "statin": {
-        "drug_name": "阿托伐他汀钙片",
-        "per_dose": "一次 1 片",
-        "daily_times": "一天 1 次",
-        "meal_timing": "睡前吃最好",
-        "speak_text": _speak("阿托伐他汀钙片", "一次 1 片", "一天 1 次", "睡前吃最好", None),
-        "share_text": _share("阿托伐他汀钙片", "一次 1 片", "一天 1 次", "睡前吃", None),
+        "id": "statin",
+        "name": "阿托伐他汀钙片",
+        "lines": {"dose": "一次 1 片", "freq": "一天 1 次", "timing": "睡前吃最好"},
         "note": None,
         "warning": None,
     },
     "amlo": {
-        "drug_name": "氨氯地平片",
-        "per_dose": "一次 1 片",
-        "daily_times": "一天 1 次",
-        "meal_timing": "固定时间，饭前饭后都行",
-        "speak_text": _speak("氨氯地平片", "一次 1 片", "一天 1 次", "固定时间，饭前饭后都行", None),
-        "share_text": _share("氨氯地平片", "一次 1 片", "一天 1 次", "固定时间吃", None),
+        "id": "amlo",
+        "name": "氨氯地平片",
+        "lines": {"dose": "一次 1 片", "freq": "一天 1 次", "timing": "固定时间，饭前饭后都行"},
         "note": None,
         "warning": None,
     },
 }
+
+# GET /medications 目录（由 MED_CARDS 派生，避免两处维护）
+MOCK_MEDICATIONS = [{"id": c["id"], "name": c["name"]} for c in MED_CARDS.values()]
 
 
 def list_medications() -> list[dict]:

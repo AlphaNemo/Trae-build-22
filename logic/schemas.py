@@ -24,7 +24,7 @@ class HealthResponse(BaseModel):
     status: str = "ok"
 
 
-# ---------- 用药卡（三行大字卡，契约第 4 节） ----------
+# ---------- 统一药品形状（契约第 1 节：前后端共用，与 ui/drug_data.py 同构） ----------
 class MedicationItem(BaseModel):
     """GET /medications 列表项：选常用药大按钮。"""
 
@@ -36,21 +36,32 @@ class MedicationsResponse(BaseModel):
     medications: list[MedicationItem]
 
 
-class MedicationCard(BaseModel):
-    """三行大字卡：结果页只显示中间三行，speak/share 供两个大按钮用。"""
+class Lines(BaseModel):
+    """三行大字：一次几片 / 一天几次 / 饭前还是饭后。"""
 
-    drug_name: str = Field(..., description="药品名")
-    per_dose: str = Field(..., description="大字第 1 行：一次几片")
-    daily_times: str = Field(..., description="大字第 2 行：一天几次")
-    meal_timing: str = Field(..., description="大字第 3 行：饭前还是饭后")
-    speak_text: str = Field(..., description="「念给我听」完整朗读文本")
-    share_text: str = Field(..., description="「发给子女」分享文本")
+    dose: str = Field(..., description="大字第 1 行：一次几片，如「一次 2 粒」")
+    freq: str = Field(..., description="大字第 2 行：一天几次，如「一天 3 次」")
+    timing: str = Field(..., description="大字第 3 行：饭前还是饭后，如「饭后吃」")
+
+
+class DrugCard(BaseModel):
+    """统一药品卡：logic/mock_data.py 与 ui/drug_data.py 的数据均为此形状。
+
+    note/warning 允许为 null；朗读文本与分享文本由前端按 lines+warning 自行拼接
+    （规范见 shared/mock.md 第 3 节），不在数据里冗余存储。
+    """
+
+    id: str = Field(..., description="药品 ID，与素材图 assets/images/box_<id>.jpg 对应")
+    name: str = Field(..., description="药品名")
+    lines: Lines
+    note: str | None = Field(None, description="生活提示（如「空腹吃伤胃」），无则 null")
+    warning: str | None = Field(None, description="高危警示（如「青霉素过敏者禁用」），无则 null")
 
 
 class MedCardResponse(BaseModel):
-    """AI 统一形状（契约第 2 节）：result=用药卡，meta 存来源/耗时/模型。"""
+    """AI 统一形状（契约第 2 节）：result=药品卡，meta 存来源/耗时/模型。"""
 
-    result: MedicationCard
+    result: DrugCard
     meta: dict[str, Any] = Field(default_factory=dict, description="source/model/elapsed_ms 等")
 
 

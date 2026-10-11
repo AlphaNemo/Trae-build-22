@@ -7,14 +7,15 @@ from typing import Any
 from fastapi import APIRouter, File, HTTPException, UploadFile
 
 from ai import get_client
-from logic import mock_data
+from logic import mock_data, scan_service
 from logic.schemas import (
     ChatRequest,
     ChatResponse,
+    DrugCard,
     HealthResponse,
+    Lines,
     MedCardRequest,
     MedCardResponse,
-    MedicationCard,
     MedicationItem,
     MedicationsResponse,
     TranscribeResponse,
@@ -39,7 +40,7 @@ async def med_card(request: MedCardRequest) -> MedCardResponse:
     card = mock_data.get_med_card(request.drug_id)
     if card is None:
         raise HTTPException(status_code=404, detail=f"没有找到常用药：{request.drug_id}")
-    return MedCardResponse(result=MedicationCard(**card), meta={"source": "preset"})
+    return MedCardResponse(result=DrugCard(**card), meta={"source": "preset"})
 
 
 @router.post("/scan", response_model=MedCardResponse, summary="拍说明书 → 三行用药卡（AI 失败自动降级）")
@@ -48,25 +49,20 @@ async def scan(file: UploadFile = File(...)) -> MedCardResponse:
     started = time.perf_counter()
     meta: dict[str, Any] = {}
 
-    card_dict = None
+    # 统一形状识别（AI→预置卡映射在 scan_service 内完成）；None = 拍不清/未配置/失败
+    drug_dict = None
     try:
-        card_dict = await get_client().scan(data, file.filename or "photo.jpg")
+        drug_dict = await scan_service.scan_drug(data, file.filename or "photo.jpg")
     except Exception:
-        card_dict = None
+        drug_dict = None
 
-    card: MedicationCard | None = None
-    if card_dict:
-        try:
-            card = MedicationCard(**card_dict)
-        except Exception:
-            card = None
-
-    if card is None:
-        card = MedicationCard(**mock_data.pick_med_card())
-        meta["source"] = "mock"
-    else:
+    if drug_dict:
+        card = DrugCard(lines=Lines(**drug_dict["lines"]), **{k: v for k, v in drug_dict.items() if k != "lines"})
         meta["source"] = "ai"
         meta["model"] = "vlm"
+    else:
+        card = DrugCard(**mock_data.pick_med_card())
+        meta["source"] = "mock"
     meta["elapsed_ms"] = int((time.perf_counter() - started) * 1000)
     return MedCardResponse(result=card, meta=meta)
 
