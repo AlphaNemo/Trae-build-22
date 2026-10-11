@@ -1,2 +1,5 @@
 *.docx
 /.venv
+
+# macOS
+.DS_Store
