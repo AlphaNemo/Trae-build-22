@@ -69,10 +69,10 @@ def build_home(refresh_fn):
 
         # ── 三个大按钮（全宽） ──
         with ui.column().classes('w-full gap-4 mt-4'):
-            a11y_button('拍说明书',
+            a11y_button('拍照识别',
                         variant='primary',
                         icon='photo_camera',
-                        aria_label='拍说明书按钮，进入拍照扫描') \
+                        aria_label='拍照识别按钮，进入拍照扫描') \
                 .on('click', lambda: go_to('scan', refresh_fn))
 
             a11y_button('从常用药里选',
