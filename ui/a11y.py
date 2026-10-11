@@ -395,15 +395,24 @@ def setup_theme():
           border-radius: 16px !important;
           border: 2px dashed var(--border) !important;
       }}
-      /* 黑色加号触发按钮（加大） */
+      /* 黑色加号触发按钮（超显眼：大圆钮 + 描边 + 呼吸动画） */
       .q-uploader .q-btn--dense.q-btn {{
-          min-height: 72px !important;
-          min-width: 72px !important;
-          font-size: 32px !important;
-          border-radius: 20px !important;
+          min-height: 128px !important;
+          min-width: 128px !important;
+          font-size: 56px !important;
+          border-radius: 9999px !important;
+          background: var(--ink, #1c1b1a) !important;
+          color: #fff !important;
+          border: 4px solid var(--accent, #d97a32) !important;
+          box-shadow: 0 8px 24px rgba(0, 0, 0, .35) !important;
+          animation: plusPulse 1.6s ease-in-out infinite;
       }}
       .q-uploader .q-btn--dense.q-btn .q-icon {{
-          font-size: 36px !important;
+          font-size: 64px !important;
+      }}
+      @keyframes plusPulse {{
+          0%, 100% {{ transform: scale(1); }}
+          50% {{ transform: scale(1.06); }}
       }}
     </style>
     ''')
