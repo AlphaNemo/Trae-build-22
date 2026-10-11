@@ -1,11 +1,24 @@
-# logic/routes.py — 接口层：mock 先行，AI 可用时才调用，失败自动降级 mock
-# 契约依据：shared/contract.md（定题冻结后如有字段调整，B 同步改 schemas.py 与本文件）。
+# logic/routes.py — 接口层：mock/预置先行，AI 可用时才调用，失败自动降级
+# 契约依据：shared/contract.md（2026-10-11 定题草案）。赛题：药品说明书三行大字卡。
 
-from fastapi import APIRouter, File, UploadFile
+import time
+from typing import Any
+
+from fastapi import APIRouter, File, HTTPException, UploadFile
 
 from ai import get_client
 from logic import mock_data
-from logic.schemas import ChatRequest, ChatResponse, DescribeResponse, HealthResponse, TranscribeResponse
+from logic.schemas import (
+    ChatRequest,
+    ChatResponse,
+    HealthResponse,
+    MedCardRequest,
+    MedCardResponse,
+    MedicationCard,
+    MedicationItem,
+    MedicationsResponse,
+    TranscribeResponse,
+)
 
 router = APIRouter()
 
@@ -15,7 +28,50 @@ async def health() -> HealthResponse:
     return HealthResponse(status="ok")
 
 
-@router.post("/chat", response_model=ChatResponse, summary="对话（一次性返回）")
+@router.get("/medications", response_model=MedicationsResponse, summary="常用药目录（选常用药）")
+async def medications() -> MedicationsResponse:
+    items = mock_data.list_medications()
+    return MedicationsResponse(medications=[MedicationItem(**item) for item in items])
+
+
+@router.post("/med-card", response_model=MedCardResponse, summary="查用药卡（预置，离线可用）")
+async def med_card(request: MedCardRequest) -> MedCardResponse:
+    card = mock_data.get_med_card(request.drug_id)
+    if card is None:
+        raise HTTPException(status_code=404, detail=f"没有找到常用药：{request.drug_id}")
+    return MedCardResponse(result=MedicationCard(**card), meta={"source": "preset"})
+
+
+@router.post("/scan", response_model=MedCardResponse, summary="拍说明书 → 三行用药卡（AI 失败自动降级）")
+async def scan(file: UploadFile = File(...)) -> MedCardResponse:
+    data = await file.read()
+    started = time.perf_counter()
+    meta: dict[str, Any] = {}
+
+    card_dict = None
+    try:
+        card_dict = await get_client().scan(data, file.filename or "photo.jpg")
+    except Exception:
+        card_dict = None
+
+    card: MedicationCard | None = None
+    if card_dict:
+        try:
+            card = MedicationCard(**card_dict)
+        except Exception:
+            card = None
+
+    if card is None:
+        card = MedicationCard(**mock_data.pick_med_card())
+        meta["source"] = "mock"
+    else:
+        meta["source"] = "ai"
+        meta["model"] = "vlm"
+    meta["elapsed_ms"] = int((time.perf_counter() - started) * 1000)
+    return MedCardResponse(result=card, meta=meta)
+
+
+@router.post("/chat", response_model=ChatResponse, summary="追问对话（加分项）")
 async def chat(request: ChatRequest) -> ChatResponse:
     reply = None
     try:
@@ -27,21 +83,7 @@ async def chat(request: ChatRequest) -> ChatResponse:
     return ChatResponse(reply=reply)
 
 
-@router.post("/describe", response_model=DescribeResponse, summary="上传图片 → AI 描述")
-async def describe(file: UploadFile = File(...)) -> DescribeResponse:
-    data = await file.read()
-    filename = file.filename or "unknown"
-    description = None
-    try:
-        description = await get_client().describe(data, filename)
-    except Exception:
-        description = None
-    if not description:
-        description = mock_data.pick(mock_data.MOCK_DESCRIPTIONS)
-    return DescribeResponse(filename=filename, size=len(data), description=description)
-
-
-@router.post("/transcribe", response_model=TranscribeResponse, summary="语音 → 文字")
+@router.post("/transcribe", response_model=TranscribeResponse, summary="语音 → 文字（加分项）")
 async def transcribe(file: UploadFile = File(...)) -> TranscribeResponse:
     data = await file.read()
     filename = file.filename or "audio.webm"

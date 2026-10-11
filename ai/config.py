@@ -29,6 +29,7 @@ class Settings:
     model_name: str
     vlm_model_name: str
     asr_model_name: str
+    asr_sample_rate: int
     timeout: float
 
     @property
@@ -49,7 +50,8 @@ def get_settings() -> Settings:
             base_url=os.environ.get("OPENAI_BASE_URL", "https://api.openai.com/v1"),
             model_name=os.environ.get("MODEL_NAME", "gpt-4o-mini"),
             vlm_model_name=os.environ.get("VLM_MODEL_NAME", "gpt-4o"),
-            asr_model_name=os.environ.get("ASR_MODEL_NAME", "whisper-1"),
+            asr_model_name=os.environ.get("ASR_MODEL_NAME", "paraformer-realtime-v2"),
+            asr_sample_rate=int(os.environ.get("ASR_SAMPLE_RATE", "16000")),
             timeout=float(os.environ.get("AI_TIMEOUT", "20")),
         )
     return _settings

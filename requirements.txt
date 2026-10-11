@@ -7,3 +7,4 @@ uvicorn[standard]==0.54.0
 python-multipart>=0.0.20
 openai>=1.40
 httpx>=0.27
+dashscope>=1.20
