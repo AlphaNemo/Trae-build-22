@@ -82,7 +82,7 @@
 
   ```jsonc
   // Response
-  { "medications": [ { "id": "amoxicillin", "name": "阿莫西林" } ] }
+  { "medications": [ { "id": "amoxi", "name": "阿莫西林胶囊" } ] }
   ```
 
 ### 查用药卡（选常用药 → 结果页三行大字）
@@ -109,16 +109,16 @@
 
   ```jsonc
   // Request
-  { "drug_id": "amoxicillin" }
+  { "drug_id": "amoxi" }
   // Response
   {
     "result": {
-      "drug_name": "阿莫西林",
-      "per_dose": "一次 1 片",
+      "drug_name": "阿莫西林胶囊",
+      "per_dose": "一次 2 粒",
       "daily_times": "一天 3 次",
-      "meal_timing": "饭后吃",
-      "speak_text": "阿莫西林：一次吃 1 片，一天吃 3 次，饭后吃。请按医生交代吃完疗程。",
-      "share_text": "【用药卡】阿莫西林：一次 1 片，一天 3 次，饭后吃。"
+      "meal_timing": "饭前饭后都可以，间隔 8 小时",
+      "speak_text": "阿莫西林胶囊。一次 2 粒。一天 3 次。饭前饭后都可以，间隔 8 小时。注意：青霉素过敏者禁用。具体请遵医嘱。",
+      "share_text": "【用药卡】阿莫西林胶囊：一次 2 粒，一天 3 次，饭前饭后都可以（间隔 8 小时）。青霉素过敏者禁用。"
     },
     "meta": { "source": "preset" }
   }
@@ -182,3 +182,4 @@
 - 2026-10-10 建立模板（赛题未知，待定题后填充）
 - 2026-10-11 定题「药品说明书三行大字卡」，B 起草定稿草案：新增 `/medications`、`/med-card`、`/scan`，保留 `/chat`、`/transcribe` 为加分项；明确 TTS/分享走前端本地（角色B，待广播冻结）
 - 2026-10-11 全队定稿纯前端 index.html 方案，本契约改为「未启用 · 备选存档」，接口定义保留不删，备胎演示用（角色B）
+- 2026-10-11 下午 示例 id 与用药卡数据对齐权威数据源 shared/mock.md（amoxi 等短 id），与 logic/mock_data.py、素材药盒图一致（角色 D，请在群里广播）

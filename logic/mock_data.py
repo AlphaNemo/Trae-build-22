@@ -9,36 +9,101 @@ import random
 MOCK_HEALTH = {"status": "ok"}
 
 # ---------- 预置常用药（离线可用，source=preset；降级时也复用，source=mock） ----------
+# 数据唯一权威：shared/mock.md 第 1 节 8 种药（id/药名/三行/note/warning 逐字一致，D 维护）。
+# id 与素材药盒图 assets/images/box_<id>.jpg 一一对应。
 MOCK_MEDICATIONS = [
-    {"id": "amoxicillin", "name": "阿莫西林"},
-    {"id": "metformin", "name": "二甲双胍"},
-    {"id": "ibuprofen", "name": "布洛芬"},
+    {"id": "amoxi", "name": "阿莫西林胶囊"},
+    {"id": "cefix", "name": "头孢克肟分散片"},
+    {"id": "metfor", "name": "二甲双胍缓释片"},
+    {"id": "ibu", "name": "布洛芬缓释胶囊"},
+    {"id": "nife", "name": "硝苯地平控释片"},
+    {"id": "gankang", "name": "感冒灵颗粒"},
+    {"id": "statin", "name": "阿托伐他汀钙片"},
+    {"id": "amlo", "name": "氨氯地平片"},
 ]
 
+
+def _speak(name: str, dose: str, freq: str, timing: str, warning: str | None) -> str:
+    """与 shared/mock.md 第 3 节 TTS 拼接规范一致：药名。dose。freq。timing。+（warning）+ 遵医嘱提醒。"""
+    parts = [f"{name}。", f"{dose}。", f"{freq}。", f"{timing}。"]
+    if warning:
+        parts.append(f"注意：{warning}。")
+    parts.append("具体请遵医嘱。")
+    return "".join(parts)
+
+
+def _share(name: str, dose: str, freq: str, timing: str, extra: str | None) -> str:
+    """契约格式：【用药卡】药名：一次 X 片，一天 X 次，饭后吃（note/warning 有则附一句）。"""
+    text = f"【用药卡】{name}：{dose}，{freq}，{timing}。"
+    if extra:
+        text += extra
+    return text
+
+
 MED_CARDS: dict[str, dict] = {
-    "amoxicillin": {
-        "drug_name": "阿莫西林",
-        "per_dose": "一次 1 片",
+    "amoxi": {
+        "drug_name": "阿莫西林胶囊",
+        "per_dose": "一次 2 粒",
         "daily_times": "一天 3 次",
-        "meal_timing": "饭后吃",
-        "speak_text": "阿莫西林：一次吃 1 片，一天吃 3 次，饭后吃。阿莫西林是抗生素，请按医生交代吃完疗程，不要自己停药。",
-        "share_text": "【用药卡】阿莫西林：一次 1 片，一天 3 次，饭后吃。请遵医嘱吃完疗程。",
+        "meal_timing": "饭前饭后都可以，间隔 8 小时",
+        "speak_text": _speak("阿莫西林胶囊", "一次 2 粒", "一天 3 次", "饭前饭后都可以，间隔 8 小时", "青霉素过敏者禁用"),
+        "share_text": _share("阿莫西林胶囊", "一次 2 粒", "一天 3 次", "饭前饭后都可以（间隔 8 小时）", "青霉素过敏者禁用。"),
     },
-    "metformin": {
-        "drug_name": "二甲双胍",
+    "cefix": {
+        "drug_name": "头孢克肟分散片",
+        "per_dose": "一次 2 片",
+        "daily_times": "一天 2 次",
+        "meal_timing": "饭后吃",
+        "speak_text": _speak("头孢克肟分散片", "一次 2 片", "一天 2 次", "饭后吃", "服药期间和停药 7 天内，一口酒都不能沾"),
+        "share_text": _share("头孢克肟分散片", "一次 2 片", "一天 2 次", "饭后吃", "服药期间和停药 7 天内，一口酒都不能沾。"),
+    },
+    "metfor": {
+        "drug_name": "二甲双胍缓释片",
         "per_dose": "一次 1 片",
         "daily_times": "一天 2 次",
-        "meal_timing": "随餐吃",
-        "speak_text": "二甲双胍：一次吃 1 片，一天吃 2 次，跟着饭一起吃，可以减少胃部不舒服。",
-        "share_text": "【用药卡】二甲双胍：一次 1 片，一天 2 次，随餐吃。胃部不适请咨询医生。",
+        "meal_timing": "随餐或饭后马上吃",
+        "speak_text": _speak("二甲双胍缓释片", "一次 1 片", "一天 2 次", "随餐或饭后马上吃", None),
+        "share_text": _share("二甲双胍缓释片", "一次 1 片", "一天 2 次", "随餐或饭后马上吃", "空腹吃容易拉肚子。"),
     },
-    "ibuprofen": {
-        "drug_name": "布洛芬",
-        "per_dose": "一次 1 片",
-        "daily_times": "一天 3 次",
+    "ibu": {
+        "drug_name": "布洛芬缓释胶囊",
+        "per_dose": "一次 1 粒",
+        "daily_times": "一天 2 次",
         "meal_timing": "饭后吃",
-        "speak_text": "布洛芬：一次吃 1 片，一天吃 3 次，饭后吃，不要空腹吃。最多连吃 3 天，不见好要去看医生。",
-        "share_text": "【用药卡】布洛芬：一次 1 片，一天 3 次，饭后吃。不要空腹服，连用不超过 3 天。",
+        "speak_text": _speak("布洛芬缓释胶囊", "一次 1 粒", "一天 2 次", "饭后吃", "有胃病、哮喘请先问医生"),
+        "share_text": _share("布洛芬缓释胶囊", "一次 1 粒", "一天 2 次", "饭后吃", "空腹吃伤胃；有胃病、哮喘请先问医生。"),
+    },
+    "nife": {
+        "drug_name": "硝苯地平控释片",
+        "per_dose": "一次 1 片",
+        "daily_times": "一天 1 次",
+        "meal_timing": "早晨固定时间，整片吞不能掰",
+        "speak_text": _speak("硝苯地平控释片", "一次 1 片", "一天 1 次", "早晨固定时间，整片吞不能掰", None),
+        "share_text": _share("硝苯地平控释片", "一次 1 片", "一天 1 次", "早晨固定时间整片吞服", "药片空壳随大便排出是正常的。"),
+    },
+    "gankang": {
+        "drug_name": "感冒灵颗粒",
+        "per_dose": "一次 1 袋",
+        "daily_times": "一天 3 次",
+        "meal_timing": "开水冲服，饭后",
+        "speak_text": _speak("感冒灵颗粒", "一次 1 袋", "一天 3 次", "开水冲服，饭后", "含对乙酰氨基酚，别和其他感冒药一起吃"),
+        "share_text": _share("感冒灵颗粒", "一次 1 袋", "一天 3 次", "开水冲服，饭后", "含对乙酰氨基酚，别和其他感冒药一起吃。"),
+    },
+    "statin": {
+        "drug_name": "阿托伐他汀钙片",
+        "per_dose": "一次 1 片",
+        "daily_times": "一天 1 次",
+        "meal_timing": "睡前吃最好",
+        "speak_text": _speak("阿托伐他汀钙片", "一次 1 片", "一天 1 次", "睡前吃最好", None),
+        "share_text": _share("阿托伐他汀钙片", "一次 1 片", "一天 1 次", "睡前吃", None),
+    },
+    "amlo": {
+        "drug_name": "氨氯地平片",
+        "per_dose": "一次 1 片",
+        "daily_times": "一天 1 次",
+        "meal_timing": "固定时间，饭前饭后都行",
+        "speak_text": _speak("氨氯地平片", "一次 1 片", "一天 1 次", "固定时间，饭前饭后都行", None),
+        "share_text": _share("氨氯地平片", "一次 1 片", "一天 1 次", "固定时间吃", None),
     },
 }
 
