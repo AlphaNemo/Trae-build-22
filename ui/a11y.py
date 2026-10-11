@@ -116,20 +116,31 @@ def setup_theme():
           pointer-events: none;
       }}
 
-      /* ── 手机壳容器（390×844 居中，玻璃外壳） ── */
+      /* ── 手机壳容器（自适应宽度，移动端全屏，桌面 480px 上限） ── */
       .phone-shell {{
-          max-width: 390px;
-          margin: 24px auto;
-          min-height: 844px;
+          width: 100%;
+          max-width: 480px;
+          margin: 0 auto;
+          min-height: 100vh;
           background: var(--glass-bg);
           -webkit-backdrop-filter: blur(28px) saturate(1.8);
           backdrop-filter: blur(28px) saturate(1.8);
-          border: 1px solid var(--glass-border);
-          border-radius: 32px;
-          box-shadow: var(--shadow-strong);
+          border: none;
+          border-radius: 0;
+          box-shadow: none;
           overflow: hidden;
           position: relative;
           z-index: 1;
+      }}
+      /* 桌面端给手机壳加圆角 + 阴影（恢复"手机"观感） */
+      @media (min-width: 520px) {{
+          .phone-shell {{
+              border: 1px solid var(--glass-border);
+              border-radius: 32px;
+              box-shadow: var(--shadow-strong);
+              margin: 24px auto;
+              min-height: 844px;
+          }}
       }}
 
       /* ── 毛玻璃卡片 ── */
