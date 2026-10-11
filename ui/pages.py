@@ -165,7 +165,10 @@ def build_scan(refresh_fn):
             state.selected_drug = drug
             status.set_text('✅ AI 识别：' + drug['name'] + '，正在生成三行卡…')
         else:
-            status.set_text('✅ 已识别：' + state.selected_drug['name'] + '，正在生成三行卡…')
+            # AI 没读出用法（拍的是药盒正面/不清晰/非预置药）：
+            # 重新随机一张演示数据（避免每次都是同一个药），并如实标注是演示而非识别结果
+            state.selected_drug = random.choice(DRUGS)
+            status.set_text('未读到用法用量，已展示演示数据：' + state.selected_drug['name'])
         ui.timer(0.8, lambda: go_to('result', refresh_fn), once=True)
 
     with ui.column().classes('w-full items-center gap-3'):
