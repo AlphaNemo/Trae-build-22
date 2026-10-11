@@ -146,18 +146,19 @@ forbidden:                      # 2.5 小时内禁止使用
 
 ```
 Trae-build-22/
-├─ main.py              # 入口装配（NiceGUI，1 人独占）
-├─ ui/                  # 前端界面（开发A）
-├─ logic/               # 业务逻辑（开发B）
-├─ ai/                  # AI 调用 / prompt（开发C）
+├─ main.py              # 入口装配（角色 A 独占）
+├─ ui/                  # 前端界面（角色 A）
+├─ logic/               # 业务逻辑（角色 B）
+├─ ai/                  # AI 调用（角色 B；prompt 文本由角色 C 提供）
+├─ docs/                # 需求文档（角色 C，requirements.md 为唯一真相源）
 └─ shared/
-   ├─ contract.md       # 接口契约（已建，待填）
-   └─ mock.md           # 假数据（已建，待填）
+   ├─ contract.md       # 接口契约（模板已建，定题后 15 分钟内冻结）
+   └─ mock.md           # 假数据（模板已建，定题后由 D 填充）
 ```
 
 - **一个文件只有一个 owner**；改公共文件前先广播。
 - 接口契约**先冻结再开发**。
-- 现状：`shared/contract.md`、`shared/mock.md`、`AGENT.md` 目前为**空文件**，需尽快补齐。
+- 现状（2026-10-11 赛前）：`AGENT.md` + `AGENT_A~D.md` 已完备；`contract.md` / `mock.md` 均为**带填写指引的模板**，待现场定题后分别由 B、D 填充；`ui/`、`logic/`、`ai/`、`docs/` 已预建占位目录。
 
 ---
 
@@ -186,17 +187,16 @@ Trae-build-22/
 ## 8. 依赖与安装
 
 ```bash
-# 前端（当前路线 A+）
-pip install nicegui            # 沙箱实测 3.18.0
-
-# 后端
-pip install fastapi "uvicorn[standard]" python-multipart
+# 一键安装（版本锁定，弱网加清华镜像）
+pip install -r requirements.txt
+#   弱网兜底：pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
 
 # 运行
-python main.py                 # NiceGUI（默认 8080 端口）
+python main.py                 # NiceGUI（默认 8080 端口；Windows 无 python 命令时用 py main.py）
 ```
 
-沙箱已验证版本：`nicegui 3.18.0`、`fastapi 0.143.0`、`uvicorn 0.54.0`、`Python 3.12`。
+沙箱已验证版本：`nicegui 3.18.0`、`fastapi 0.143.0`、`uvicorn 0.54.0`、`Python 3.12`（赛前本机 Python 3.13 同样实测通过）。
+完整版本锁定见根目录 [`requirements.txt`](./requirements.txt)；密钥环境变量见 [`.env.example`](./.env.example)。
 
 ---
 
@@ -221,13 +221,14 @@ python main.py                 # NiceGUI（默认 8080 端口）
 
 ## 10. 开赛前环境 Checklist
 
-- [ ] 确认路线 A+（NiceGUI），全员统一
-- [ ] 本地跑通 `python main.py`（能启动、能预览）
-- [ ] 至少 1 个 LLM API key 可用（含备用）
-- [ ] ASR / TTS / VLM 各验证一个
-- [ ] 全部依赖已安装、已缓存（弱网也能装）
-- [ ] Git 配置完成（`user.email` 用 GitHub noreply，避免 push 被拒）
-- [ ] 补全 `shared/contract.md` 与 `shared/mock.md`
+- [x] 确认路线 A+（NiceGUI），全员统一
+- [x] 本地跑通 `python main.py`（赛前已冒烟：8080 可访问）
+- [x] 全部依赖已锁定 `requirements.txt` 并在本机安装验证（弱网用清华镜像）
+- [ ] 至少 1 个 LLM API key 可用（含备用），按 `.env.example` 配置环境变量
+- [ ] ASR / TTS / VLM 各验证一个（TTS 用浏览器 Web Speech，零成本先验）
+- [ ] 其他队员的机器也跑一遍 `pip install -r requirements.txt`（弱网也能装）
+- [x] Git 配置完成（`user.email` 用 GitHub noreply，避免 push 被拒）
+- [ ] 现场定题后 15 分钟内：B 冻结 `shared/contract.md`，D 同步填 `shared/mock.md`
 
 ---
 
@@ -235,10 +236,12 @@ python main.py                 # NiceGUI（默认 8080 端口）
 
 | 文件 | 用途 |
 |---|---|
-| `main.py` | NiceGUI 入口（已存在，Hello World） |
-| `nicegui_ai_demo.py` | NiceGUI 无障碍骨架（已测） |
-| `fastapi_ai_demo.py` | FastAPI 后端骨架（已测） |
-| `shared/contract.md` | 接口契约（待填） |
-| `shared/mock.md` | 假数据（待填） |
+| `main.py` | NiceGUI 入口（可运行 Hello World） |
+| `requirements.txt` | 锁定依赖版本，一键安装 |
+| `.env.example` | 密钥环境变量占位（复制为 `.env` 使用，禁止入库真实 key） |
+| `shared/contract.md` | 接口契约模板（定题后 B 冻结） |
+| `shared/mock.md` | 假数据模板（定题后 D 填充） |
+| `AI_DOCS.md` | 官方文档索引（NiceGUI / FastAPI 等，防 API 幻觉） |
+| `AGENT.md` / `AGENT_A~D.md` | AI 编码助手全局与四角色规则 |
 
 *本文件为技术选型唯一真相来源，代码实现须与此保持一致。*

@@ -46,6 +46,7 @@ main.py           # 入口装配（角色 A 独占，其他人不改）
 ui/               # 前端界面（角色 A）
 logic/            # 业务逻辑与接口（角色 B）
 ai/               # AI 调用（角色 B；prompt 文本由角色 C 提供）
+docs/             # 需求文档（角色 C，requirements.md 为唯一真相源）
 shared/
   contract.md     # 接口契约（角色 B 主笔，冻结后只读）
   mock.md         # 假数据（角色 D 维护）
@@ -112,14 +113,14 @@ shared/
 ## 8. 常用命令
 
 ```bash
-# 安装
-pip install nicegui fastapi "uvicorn[standard]" python-multipart
+# 安装（版本锁定，一键完成）
+pip install -r requirements.txt
 
 # 运行前端（NiceGUI）
 python main.py
 
-# 运行后端（如需独立服务）
-uvicorn app:app --reload --port 8000
+# 运行后端（如需独立服务；模块路径以 B 实际文件为准，如 logic/server.py）
+uvicorn logic.server:app --reload --port 8000
 ```
 
 ---

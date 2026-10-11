@@ -1,2 +1,17 @@
+# 密钥与环境（仅保留 .env.example 占位入库）
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# 路演稿等 Office 文档不入库（README 仅登记云链接）
 *.docx
-/.venv
+
+# 系统/编辑器
+Thumbs.db
+.DS_Store

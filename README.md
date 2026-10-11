@@ -47,11 +47,14 @@
 git clone https://github.com/AlphaNemo/Trae-build-22.git
 cd Trae-build-22
 
-# 2. 安装依赖（建议虚拟环境）
-pip install nicegui fastapi "uvicorn[standard]" python-multipart
+# 2. 安装依赖（版本已锁定；弱网追加 -i https://pypi.tuna.tsinghua.edu.cn/simple）
+pip install -r requirements.txt
 
-# 3. 运行
-python main.py
+# 3. 配置密钥（复制后填入真实 key；.env 不会入库）
+copy .env.example .env   # macOS/Linux: cp .env.example .env
+
+# 4. 运行
+python main.py           # Windows 提示找不到 python 时用 py main.py
 ```
 
 打开浏览器访问 **http://localhost:8080** 即可。
@@ -62,13 +65,18 @@ python main.py
 
 ```
 Trae-build-22/
-├─ main.py              # 入口（NiceGUI 应用装配）
-├─ ui/                  # 前端界面
-├─ logic/               # 业务逻辑
-├─ ai/                  # AI 调用 / prompt
-└─ shared/
-   ├─ contract.md       # 接口契约（前后端约定）
-   └─ mock.md           # 演示用假数据
+├─ main.py              # 入口（角色 A 独占，NiceGUI 应用装配）
+├─ ui/                  # 前端界面（A）
+├─ logic/               # 业务逻辑与接口（B）
+├─ ai/                  # AI 调用（B；prompt 文本由 C 提供）
+├─ docs/                # 需求文档（C，requirements.md 为唯一真相源）
+├─ shared/
+│  ├─ contract.md       # 接口契约（B 主笔，定题后 15 分钟内冻结）
+│  └─ mock.md           # 演示用假数据（D 维护，接口异常时降级）
+├─ requirements.txt     # 依赖版本锁定
+├─ .env.example         # 密钥环境变量占位（真实 .env 禁止入库）
+├─ AGENT.md / AGENT_A~D.md  # AI 助手全局规则 + 四角色规则
+└─ AI_DOCS.md           # 官方文档索引（防 API 幻觉）
 ```
 
 ---
@@ -78,9 +86,15 @@ Trae-build-22/
 | 文档 | 说明 |
 |---|---|
 | [`TECH_STACK.md`](./TECH_STACK.md) | 前后端技术栈规范（唯一真相来源）|
-| [`AGENT.md`](./AGENT.md) | 给 AI 编码助手的项目规则 |
-| [`shared/contract.md`](./shared/contract.md) | 接口契约 |
-| [`shared/mock.md`](./shared/mock.md) | 假数据 |
+| [`AGENT.md`](./AGENT.md) | AI 编码助手全局规则与角色路由 |
+| [`AGENT_A.md`](./AGENT_A.md) ~ [`AGENT_D.md`](./AGENT_D.md) | 四角色专属 AI 规则（开工先读自己那份）|
+| [`AI_DOCS.md`](./AI_DOCS.md) | 官方文档索引（写代码前查阅，禁止凭记忆猜 API）|
+| [`shared/contract.md`](./shared/contract.md) | 接口契约模板（定题后 B 冻结）|
+| [`shared/mock.md`](./shared/mock.md) | 假数据模板（定题后 D 填充）|
+| [`.env.example`](./.env.example) | 密钥环境变量占位 |
+| [4人分工优化方案.md](./.trae/documents/4人分工优化方案.md) | 分工与三阶段时间轴真相源 |
+
+> 📝 **路演稿云文档**（不入库，C 产出后在此登记链接）：_待补_
 
 ---
 

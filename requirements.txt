@@ -1,0 +1,9 @@
+# 黑客松现场一键安装：py -m pip install -r requirements.txt
+# 弱网/超时可加镜像：-i https://pypi.tuna.tsinghua.edu.cn/simple
+# 版本为沙箱实测组合（Python 3.12），升级前先在群里广播
+nicegui==3.18.0
+fastapi==0.143.0
+uvicorn[standard]==0.54.0
+python-multipart>=0.0.20
+openai>=1.40
+httpx>=0.27
