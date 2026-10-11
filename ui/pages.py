@@ -55,13 +55,17 @@ def build_home(refresh_fn):
                    aria_label='首页标语',
                    color='#4A4A4A').classes('text-lg mt-4')
 
-        # 首页标题大字
-        ui.label('药品说明书\n三行大字卡').classes('text-4xl font-bold text-center') \
-            .style('color: var(--text-primary); line-height: 1.3') \
-            .props('aria-label="药品说明书三行大字卡应用标题" role="heading" aria-level="1"')
-
-        ui.label('把 500 字说明书，压缩成三行大字').classes('text-base') \
-            .style('color: var(--text-secondary)')
+        # 图标 + 标题组合，排版更美观
+        with ui.column().classes('w-full items-center gap-1 mt-2'):
+            ui.label('💊').classes('text-5xl') \
+                .props('aria-hidden="true"')
+            ui.label('药品说明书').classes('text-3xl font-bold text-center tracking-wide') \
+                .style('color: var(--text-primary); letter-spacing: 0.08em') \
+                .props('aria-label="药品说明书三行大字卡应用标题" role="heading" aria-level="1"')
+            ui.label('三行大字卡').classes('text-2xl font-bold text-center') \
+                .style('color: var(--accent); letter-spacing: 0.12em')
+            ui.label('把 500 字说明书，压缩成三行大字').classes('text-base mt-2') \
+                .style('color: var(--text-secondary)')
 
         # ── 三个大按钮（全宽） ──
         with ui.column().classes('w-full gap-4 mt-4'):
@@ -86,7 +90,7 @@ def build_home(refresh_fn):
                 .on('click', lambda: go_to('box', refresh_fn))
 
         # 底部说明
-        ui.label('不用登录 · 离线可用 · 专为老人设计') \
+        ui.label('免登录易使用 · 专为老人设计') \
             .classes('text-sm mt-6').style('color: var(--text-muted)')
 
 
@@ -95,8 +99,12 @@ def build_home(refresh_fn):
 def show_drug_picker(refresh_fn):
     """弹出药品选择菜单（8 种药，大卡片网格）"""
     with ui.dialog() as dialog, ui.card().classes('a11y-card'):
-        ui.label('选择药品').classes('text-2xl font-bold mb-4') \
-            .props('role="heading" aria-level="2"')
+        # 左上角返回按钮 + 标题
+        with ui.row().classes('w-full items-center gap-3 mb-4'):
+            ui.button('← 返回', on_click=dialog.close) \
+                .props('aria-label="返回首页"').classes('back-btn')
+            ui.label('选择药品').classes('text-2xl font-bold') \
+                .props('role="heading" aria-level="2"')
 
         with ui.column().classes('w-full gap-3'):
             for drug in DRUGS:
@@ -120,9 +128,6 @@ def show_drug_picker(refresh_fn):
                             .props(f'aria-label="选择 {dname}"')
                         ui.label(summary).classes('text-sm') \
                             .style('color: var(--text-muted)')
-
-        ui.button('关闭', on_click=dialog.close) \
-            .props('aria-label="关闭药品选择" outline').classes('mt-3')
 
     dialog.open()
 
@@ -180,11 +185,8 @@ def build_scan(refresh_fn):
         ui.label('拍一下，就知道这药怎么吃').classes('text-lg mt-1') \
             .style('color: var(--text-secondary)')
 
-        # 扫描框（先占位置，上传后填入图片）
-        scan_frame
-
-        # 上传按钮
-        with ui.column().classes('w-full items-center gap-2 mt-1'):
+        # 上传按钮 —— 页面最上方
+        with ui.column().classes('w-full items-center gap-2'):
             ui.upload(
                 label='📷 选择图片（药盒 / 说明书）',
                 multiple=False,
@@ -193,11 +195,13 @@ def build_scan(refresh_fn):
             ).props('aria-label="选择药品图片上传" size=lg rounded accept="image/*"') \
                 .classes('w-full')
 
-        # 兜底链接：直接选药（PDF 方案原文）
+        # 扫描框 —— 居中显示（先占位置，上传后填入图片）
+        scan_frame
+
+        # 兜底链接：直接选药
         ui.button('📋 拍不清楚？从常用药里选',
                   on_click=lambda: show_drug_picker(refresh_fn)) \
-            .props('aria-label="跳过扫描，从常用药里选择" outline') \
-            .classes('mt-1')
+            .props('aria-label="跳过扫描，从常用药里选择" outline')
 
         status
 
