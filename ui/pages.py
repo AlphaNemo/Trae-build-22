@@ -161,17 +161,21 @@ def build_scan(refresh_fn):
             ui.html(f'<img src="{img_src}" alt="上传的药品图片">')
             ui.element('div').classes('scan-line')
 
-        # 真 AI 识别：配置了 key 且识别成功 → 用 AI 读到的三行；
-        # 未配置 / 超时 / 拍不清 / 非预置药 → scan_service 返回 None，静默走预置演示流程
+        # 真 AI 识别：返回 None 仅代表 AI 服务故障（未配置/超时）→ 演示兜底；
+        # 识别成功则逐字段透出，读不清的行由结果页显示「无法识别」
         drug = await scan_service.scan_drug(data, getattr(e.file, 'name', '') or 'photo.jpg')
         if drug is not None:
             state.selected_drug = drug
-            status.set_text('✅ AI 识别：' + drug['name'] + '，正在生成三行卡…')
+            if drug.get('matched'):
+                status.set_text('✅ AI 识别：' + drug['name'] + '，正在生成三行卡…')
+            elif drug.get('name'):
+                status.set_text('✅ AI 识别：' + drug['name'] + '（未收录常用药库）')
+            else:
+                status.set_text('未识别出药品信息')
         else:
-            # AI 没读出用法（拍的是药盒正面/不清晰/非预置药）：
-            # 重新随机一张演示数据（避免每次都是同一个药），并如实标注是演示而非识别结果
+            # AI 服务故障（未配置 key / 超时）：展示演示数据并如实标注
             state.selected_drug = random.choice(DRUGS)
-            status.set_text('未读到用法用量，已展示演示数据：' + state.selected_drug['name'])
+            status.set_text('AI 服务暂不可用，已展示演示数据：' + state.selected_drug['name'])
         ui.timer(0.8, lambda: go_to('result', refresh_fn), once=True)
 
     with ui.column().classes('w-full items-center gap-3'):
@@ -225,41 +229,37 @@ def build_result(refresh_fn):
         ui.button('← 返回', on_click=_back_to_home) \
             .props('aria-label="返回首页"').classes('back-btn self-start')
 
-        # 药名（36px）
-        ui.label(drug['name']).classes('drug-name self-center') \
-            .props(f'aria-label="{drug["name"]} 用药信息" role="heading" aria-level="1"')
+        # 药名（36px）—— AI 没读出药名时如实显示
+        drug_name = drug.get('name') or '未识别出药品'
+        ui.label(drug_name).classes('drug-name self-center') \
+            .props(f'aria-label="{drug_name} 用药信息" role="heading" aria-level="1"')
 
-        # ── 三行大字（52px） ──
+        # ── 三行大字（52px）—— 逐字段诚实：读出的照常显示，没读出的显示「无法识别」 ──
         lines = drug['lines']
+
+        def _line_row(emoji: str, label: str, key: str, aria_key: str, divider: bool):
+            value = lines[key]
+            shown = value if value else '无法识别'
+            with ui.row().classes('w-full items-end gap-2'):
+                ui.label(emoji).classes('text-4xl')
+                with ui.column():
+                    ui.label(label).classes('drug-line-label')
+                    line_label = ui.label(shown).classes('drug-line') \
+                        .props(f'aria-label="{aria_key}：{shown}"')
+                    if not value:
+                        line_label.style('color: var(--text-muted)')
+            if divider:
+                ui.element('div').style('height: 1px; background: var(--border); margin: 8px 0')
 
         with ui.column().classes('w-full gap-0 a11y-card').style('padding: 24px 20px'):
             # 第一行：一次几粒
-            with ui.row().classes('w-full items-end gap-2'):
-                ui.label('💊').classes('text-4xl')
-                with ui.column():
-                    ui.label('一次').classes('drug-line-label')
-                    ui.label(lines['dose']).classes('drug-line') \
-                        .props(f'aria-label="服药剂量：{lines["dose"]}"')
-
-            ui.element('div').style('height: 1px; background: var(--border); margin: 8px 0')
+            _line_row('💊', '一次', 'dose', '服药剂量', divider=True)
 
             # 第二行：一天几次
-            with ui.row().classes('w-full items-end gap-2'):
-                ui.label('🕐').classes('text-4xl')
-                with ui.column():
-                    ui.label('一天').classes('drug-line-label')
-                    ui.label(lines['freq']).classes('drug-line') \
-                        .props(f'aria-label="服药频率：{lines["freq"]}"')
-
-            ui.element('div').style('height: 1px; background: var(--border); margin: 8px 0')
+            _line_row('🕐', '一天', 'freq', '服药频率', divider=True)
 
             # 第三行：饭前/饭后
-            with ui.row().classes('w-full items-end gap-2'):
-                ui.label('🍽️').classes('text-4xl')
-                with ui.column():
-                    ui.label('吃饭').classes('drug-line-label')
-                    ui.label(lines['timing']).classes('drug-line') \
-                        .props(f'aria-label="服药时间：{lines["timing"]}"')
+            _line_row('🍽️', '吃饭', 'timing', '服药时间', divider=False)
 
         # ── 灰色小注释（有 note 才显示） ──
         if drug.get('note'):
@@ -310,10 +310,14 @@ def build_result(refresh_fn):
 
 
 def _speak_drug(drug: dict):
-    """朗读完整用药信息（慢速 0.85，老人友好）"""
+    """朗读完整用药信息（慢速 0.85，老人友好）；没读出的行不念，只念识别到的内容"""
     lines = drug['lines']
-    text = (f"{drug['name']}。"
-            f"{lines['dose']}。{lines['freq']}。{lines['timing']}。")
+    name = drug.get('name') or '这个药'
+    parts = [lines[k] for k in ('dose', 'freq', 'timing') if lines.get(k)]
+    if parts:
+        text = name + '。' + '。'.join(parts) + '。'
+    else:
+        text = '很抱歉，没有识别到用法用量。请拍摄说明书上印有用法用量的一页，或咨询药师。'
     if drug.get('warning'):
         text += f"注意！{drug['warning']}。"
     if drug.get('note'):
@@ -328,6 +332,9 @@ def _set_font_big(big: bool):
 
 
 def _add_and_notify(drug: dict, refresh_fn):
+    if not drug.get('id'):
+        ui.notify('未识别出常用药库中的药品，无法放入药盒', type='warning')
+        return
     state.add_to_box(drug['id'])
     ui.notify(f'✅ {drug["name"]} 已放进药盒', type='positive')
     # 刷新首页药盒计数
@@ -395,13 +402,17 @@ def build_box(refresh_fn):
 # ── 分享弹层（屏 5 · 发给子女） ───────────────────────────
 
 def show_share_dialog(drug: dict):
-    """屏 5 · 发给子女 —— 弹出分享卡 + 复制文字按钮"""
+    """屏 5 · 发给子女 —— 弹出分享卡 + 复制文字按钮（没读出的行显示「无法识别」）"""
     lines = drug['lines']
-    text = f"""📋 {drug['name']} 用法三行卡
+    dose = lines.get('dose') or '无法识别'
+    freq = lines.get('freq') or '无法识别'
+    timing = lines.get('timing') or '无法识别'
+    name = drug.get('name') or '未识别药品'
+    text = f"""📋 {name} 用法三行卡
 ━━━━━━━━━━━━━━━━━━
-💊 {lines['dose']}
-🕐 {lines['freq']}
-🍽️ {lines['timing']}"""
+💊 {dose}
+🕐 {freq}
+🍽️ {timing}"""
     if drug.get('warning'):
         text += f"\n\n⚠️ 警示：{drug['warning']}"
     text += f"\n\n📅 {_today()}"
@@ -412,14 +423,14 @@ def show_share_dialog(drug: dict):
 
         # 分享卡预览
         with ui.column().classes('a11y-card-warm w-full'):
-            ui.label(drug['name']).classes('text-2xl font-bold self-center')
+            ui.label(name).classes('text-2xl font-bold self-center')
             ui.element('hr').style('border-color: var(--border); margin: 12px 0')
             ui.label('💊 一次').classes('drug-line-label')
-            ui.label(lines['dose']).classes('text-xl')
+            ui.label(dose).classes('text-xl')
             ui.label('🕐 一天').classes('drug-line-label mt-2')
-            ui.label(lines['freq']).classes('text-xl')
+            ui.label(freq).classes('text-xl')
             ui.label('🍽️ 吃饭').classes('drug-line-label mt-2')
-            ui.label(lines['timing']).classes('text-xl')
+            ui.label(timing).classes('text-xl')
             if drug.get('warning'):
                 ui.label(f'⚠️ {drug["warning"]}').classes('drug-warning')
 

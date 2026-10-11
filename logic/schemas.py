@@ -37,22 +37,28 @@ class MedicationsResponse(BaseModel):
 
 
 class Lines(BaseModel):
-    """三行大字：一次几片 / 一天几次 / 饭前还是饭后。"""
+    """三行大字：一次几片 / 一天几次 / 饭前还是饭后。
 
-    dose: str = Field(..., description="大字第 1 行：一次几片，如「一次 2 粒」")
-    freq: str = Field(..., description="大字第 2 行：一天几次，如「一天 3 次」")
-    timing: str = Field(..., description="大字第 3 行：饭前还是饭后，如「饭后吃」")
+    /scan（AI 识别）场景下某行读不清 → 该行为 null，前端显示「无法识别」；
+    预置数据（/med-card、药库）三行恒为非空字符串。
+    """
+
+    dose: str | None = Field(None, description="大字第 1 行：一次几片，如「一次 2 粒」；AI 未读出则 null")
+    freq: str | None = Field(None, description="大字第 2 行：一天几次，如「一天 3 次」；AI 未读出则 null")
+    timing: str | None = Field(None, description="大字第 3 行：饭前还是饭后，如「饭后吃」；AI 未读出则 null")
 
 
 class DrugCard(BaseModel):
     """统一药品卡：logic/mock_data.py 与 ui/drug_data.py 的数据均为此形状。
 
+    预置数据（药库/med-card）全字段非空；/scan（AI 识别）允许 id/name 为 null
+    （未命中常用药库 / 未识别出药名），lines 各行可 null（读不清即 null）。
     note/warning 允许为 null；朗读文本与分享文本由前端按 lines+warning 自行拼接
     （规范见 shared/mock.md 第 3 节），不在数据里冗余存储。
     """
 
-    id: str = Field(..., description="药品 ID，与素材图 assets/images/box_<id>.jpg 对应")
-    name: str = Field(..., description="药品名")
+    id: str | None = Field(None, description="药品 ID，与素材图 assets/images/box_<id>.jpg 对应；AI 未命中药库则 null")
+    name: str | None = Field(None, description="药品名；AI 未识别出药名则 null")
     lines: Lines
     note: str | None = Field(None, description="生活提示（如「空腹吃伤胃」），无则 null")
     warning: str | None = Field(None, description="高危警示（如「青霉素过敏者禁用」），无则 null")

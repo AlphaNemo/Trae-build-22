@@ -49,7 +49,7 @@ async def scan(file: UploadFile = File(...)) -> MedCardResponse:
     started = time.perf_counter()
     meta: dict[str, Any] = {}
 
-    # 统一形状识别（AI→预置卡映射在 scan_service 内完成）；None = 拍不清/未配置/失败
+    # 统一形状识别（逐字段诚实）：None = AI 基础设施故障（未配置/超时/异常）→ mock 兜底
     drug_dict = None
     try:
         drug_dict = await scan_service.scan_drug(data, file.filename or "photo.jpg")
@@ -57,8 +57,10 @@ async def scan(file: UploadFile = File(...)) -> MedCardResponse:
         drug_dict = None
 
     if drug_dict:
+        matched = drug_dict.pop("matched", False)
         card = DrugCard(lines=Lines(**drug_dict["lines"]), **{k: v for k, v in drug_dict.items() if k != "lines"})
         meta["source"] = "ai"
+        meta["matched"] = matched
         meta["model"] = "vlm"
     else:
         card = DrugCard(**mock_data.pick_med_card())
