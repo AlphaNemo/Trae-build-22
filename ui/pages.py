@@ -140,14 +140,9 @@ def build_scan(refresh_fn):
     1.2s 后自动跳结果页（从常用药里随机选一个做演示）"""
     state.selected_drug = state.selected_drug or random.choice(DRUGS)
 
-    # 扫描框容器（后面会被填入 img + scan-line）
-    scan_frame = ui.element('div').classes('scan-frame self-center') \
-        .style('width: 80%; max-width: 320px') \
-        .props('aria-label="扫描取景框" role="img"')
-
     # 状态文字（动态更新）
     status = ui.label('请先选择一张药盒或说明书照片…') \
-        .classes('text-base mt-2') \
+        .classes('text-base mt-1') \
         .style('color: var(--text-muted)') \
         .props('aria-live="polite" role="status"')
 
@@ -177,31 +172,33 @@ def build_scan(refresh_fn):
         ui.timer(0.8, lambda: go_to('result', refresh_fn), once=True)
 
     with ui.column().classes('w-full items-center gap-3'):
-        # 返回按钮
+        # ① 返回按钮（最顶部）
         ui.button('← 返回',
                   on_click=lambda: go_to('home', refresh_fn)) \
             .props('aria-label="返回首页"').classes('back-btn self-start')
 
-        ui.label('拍一下，就知道这药怎么吃').classes('text-lg mt-1') \
+        ui.label('拍一下，就知道这药怎么吃').classes('text-base') \
             .style('color: var(--text-secondary)')
 
-        # 上传按钮 —— 页面最上方
-        with ui.column().classes('w-full items-center gap-2'):
-            ui.upload(
-                label='📷 选择图片（药盒 / 说明书）',
-                multiple=False,
-                max_files=1,
-                on_upload=_on_upload,
-            ).props('aria-label="选择药品图片上传" size=lg rounded accept="image/*"') \
-                .classes('w-full')
+        # ② 上传按钮 —— 紧随顶部
+        ui.upload(
+            label='📷 选择图片（药盒 / 说明书）',
+            multiple=False,
+            max_files=1,
+            on_upload=_on_upload,
+        ).props('aria-label="选择药品图片上传" size=lg rounded accept="image/*"') \
+            .classes('w-full')
 
-        # 扫描框 —— 居中显示（先占位置，上传后填入图片）
-        scan_frame
+        # ③ 扫描框 —— 居中显示（上传后填入图片 + 扫描线动画）
+        scan_frame = ui.element('div').classes('scan-frame self-center') \
+            .style('width: 80%; max-width: 320px') \
+            .props('aria-label="扫描取景框" role="img"')
 
-        # 兜底链接：直接选药
-        ui.button('📋 拍不清楚？从常用药里选',
-                  on_click=lambda: show_drug_picker(refresh_fn)) \
-            .props('aria-label="跳过扫描，从常用药里选择" outline')
+        # ④ 兜底链接 + 状态文字
+        with ui.row().classes('w-full items-center justify-center gap-2'):
+            ui.button('📋 拍不清楚？从常用药里选',
+                      on_click=lambda: show_drug_picker(refresh_fn)) \
+                .props('aria-label="跳过扫描，从常用药里选择" outline')
 
         status
 
