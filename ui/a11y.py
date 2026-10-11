@@ -351,11 +351,11 @@ def setup_theme():
       body.large-font {{
           font-size: 110% !important;
       }}
-      body.large-font .drug-line {{ font-size: 60px !important; }}
-      body.large-font .drug-name {{ font-size: 42px !important; }}
-      body.large-font .a11y-btn {{ font-size: 22px !important; }}
-      body.large-font .drug-warning {{ font-size: 24px !important; }}
-      body.large-font .drug-note {{ font-size: 20px !important; }}
+      body.large-font .drug-line {{ font-size: clamp(2.5rem, 9vw, 4rem) !important; }}
+      body.large-font .drug-name {{ font-size: clamp(1.75rem, 6vw, 3rem) !important; }}
+      body.large-font .a11y-btn {{ font-size: clamp(1.25rem, 5vw, 2rem) !important; }}
+      body.large-font .drug-warning {{ font-size: clamp(1.25rem, 4vw, 1.75rem) !important; }}
+      body.large-font .drug-note {{ font-size: clamp(1rem, 3vw, 1.375rem) !important; }}
       body.large-font .q-btn:focus-visible,
       body.large-font .q-field:focus-visible {{
           outline: 4px solid #2E7D6B !important;

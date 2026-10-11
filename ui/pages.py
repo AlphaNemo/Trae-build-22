@@ -65,20 +65,23 @@ def build_home(refresh_fn):
 
         # ── 三个大按钮（全宽） ──
         with ui.column().classes('w-full gap-4 mt-4'):
-            a11y_button('📷  拍说明书',
+            a11y_button('拍说明书',
                         variant='primary',
-                        aria_label='拍说明书按钮，进入假拍照扫描') \
+                        icon='photo_camera',
+                        aria_label='拍说明书按钮，进入拍照扫描') \
                 .on('click', lambda: go_to('scan', refresh_fn))
 
-            a11y_button('📋  从常用药里选',
+            a11y_button('从常用药里选',
                         variant='secondary',
+                        icon='menu_book',
                         aria_label='从常用药里选择按钮，进入药品列表') \
                 .on('click', lambda: show_drug_picker(refresh_fn))
 
             # 我的药盒 —— 有药时显示数量
-            box_text = f'💊  我的药盒 ({len(state.medbox)})' if state.medbox else '💊  我的药盒'
+            box_text = f'我的药盒 ({len(state.medbox)})' if state.medbox else '我的药盒'
             a11y_button(box_text,
                         variant='secondary',
+                        icon='medication',
                         aria_label='打开我的药盒') \
                 .on('click', lambda: go_to('box', refresh_fn))
 
